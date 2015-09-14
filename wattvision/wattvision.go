@@ -1,4 +1,4 @@
-package energywatch
+package wattvision
 
 import (
 	"bytes"

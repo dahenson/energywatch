@@ -4,6 +4,7 @@ import (
 	"log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/dahenson/energywatch/wattvision"
 	"github.com/dahenson/goraven"
 )
 
@@ -40,12 +41,30 @@ func watch() {
 		switch t := notify.(type) {
 			case *goraven.ConnectionStatus:
 				log.Println("Raven not connected to meter.")
-			case *goraven.CurrentPeriodUsage:
-				log.Println(t)
 			case *goraven.CurrentSummationDelivered:
-				log.Println(t)
+				pushCurrentSummationDelivered(t)
 			default:
 		}
 	}
 }
 
+func pushCurrentSummationDelivered(c *goraven.CurrentSummationDelivered) {
+	watthours, err := c.GetSummationDelivered()
+	if err != nil {
+		log.Println("Current Summation Data Failure: %s", err)
+		return
+	}
+	e := wattvision.EnergyData{WattHours: watthours}
+	pushEnergyData(e)
+}
+
+func pushEnergyData(e wattvision.EnergyData) {
+	e.SensorId = viper.GetString("sensor_id")
+	e.ApiId = viper.GetString("api_id")
+	e.ApiKey = viper.GetString("api_key")
+
+	err := wattvision.PushEnergyData(e)
+	if err != nil {
+		log.Println("Unable to push current summation: %s", err)
+	}
+}
