@@ -40,7 +40,7 @@ func watch() {
 
 		switch t := notify.(type) {
 		case *goraven.ConnectionStatus:
-			log.Println("Raven not connected to meter.")
+			log.Printf("Connection Status: %s", t.Status)
 		case *goraven.CurrentSummationDelivered:
 			pushCurrentSummationDelivered(t)
 		case *goraven.InstantaneousDemand:
