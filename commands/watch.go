@@ -1,15 +1,15 @@
 package commands
 
 import (
-	"log"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"github.com/dahenson/energywatch/wattvision"
 	"github.com/dahenson/goraven"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"log"
 )
 
-var watchCmd = &cobra.Command {
-	Use: "watch",
+var watchCmd = &cobra.Command{
+	Use:   "watch",
 	Short: "Watch and push data from the Raven to WattVision.",
 	Long: `Watch the Raven for energy reads, and push the data to
 WattVision. This feature requires that the Raven is specified in the
@@ -39,19 +39,31 @@ func watch() {
 		}
 
 		switch t := notify.(type) {
-			case *goraven.ConnectionStatus:
-				log.Println("Raven not connected to meter.")
-			case *goraven.CurrentSummationDelivered:
-				pushCurrentSummationDelivered(t)
-			default:
+		case *goraven.ConnectionStatus:
+			log.Println("Raven not connected to meter.")
+		case *goraven.CurrentSummationDelivered:
+			pushCurrentSummationDelivered(t)
+		case *goraven.InstantaneousDemand:
+			pushInstantaneousDemand(t)
+		default:
 		}
 	}
+}
+
+func pushInstantaneousDemand(c *goraven.InstantaneousDemand) {
+	watts, err := c.GetDemand()
+	if err != nil {
+		log.Printf("Instantaneous Demand Data Failure: %s\n", err)
+		return
+	}
+	e := wattvision.EnergyData{Watts: watts}
+	pushEnergyData(e)
 }
 
 func pushCurrentSummationDelivered(c *goraven.CurrentSummationDelivered) {
 	watthours, err := c.GetSummationDelivered()
 	if err != nil {
-		log.Println("Current Summation Data Failure: %s", err)
+		log.Printf("Current Summation Data Failure: %s\n", err)
 		return
 	}
 	e := wattvision.EnergyData{WattHours: watthours}
@@ -65,6 +77,6 @@ func pushEnergyData(e wattvision.EnergyData) {
 
 	err := wattvision.PushEnergyData(e)
 	if err != nil {
-		log.Println("Unable to push current summation: %s", err)
+		log.Printf("Unable to push data: %s\n", err)
 	}
 }

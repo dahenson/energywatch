@@ -3,6 +3,7 @@ package wattvision
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"net/http"
 )
 
@@ -28,6 +29,10 @@ func PushEnergyData(data EnergyData) error {
 	resp, err := client.Post(URL, "text/json", bytes.NewReader(buf))
 	if err != nil {
 		return err
+	}
+
+	if resp.StatusCode == 400 {
+		return errors.New("Wattvision API error")
 	}
 
 	defer resp.Body.Close()
