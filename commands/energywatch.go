@@ -15,6 +15,7 @@ var (
 	sensorId string
 	apiId    string
 	apiKey   string
+	verbose  bool
 )
 
 var energyWatch = &cobra.Command{
@@ -43,6 +44,7 @@ func init() {
 	energyWatch.PersistentFlags().StringVar(&sensorId, "sensor_id", "", "sensor id for wattvision")
 	energyWatch.PersistentFlags().StringVar(&apiId, "api_id", "", "API ID for wattvision")
 	energyWatch.PersistentFlags().StringVar(&apiKey, "api_key", "", "API Key for wattvision")
+	watchCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Run in verbose mode for debugging")
 	viper.BindPFlag("dev", energyWatch.PersistentFlags().Lookup("dev"))
 	viper.BindPFlag("sensor_id", energyWatch.PersistentFlags().Lookup("sensor_id"))
 	viper.BindPFlag("api_id", energyWatch.PersistentFlags().Lookup("api_id"))

@@ -53,23 +53,31 @@ func watch() {
 }
 
 func pushInstantaneousDemand(c *goraven.InstantaneousDemand, e wattvision.EnergyData) {
-	watts, err := c.GetDemand()
+	kilowatts, err := c.GetDemand()
 	if err != nil {
 		log.Printf("Instantaneous Demand Data Failure: %s\n", err)
 		return
 	}
-	e.Watts = watts
+	e.Watts = kilowatts * 1000 // goraven publishes demand in kW
 	pushEnergyData(e)
+
+	if verbose {
+		log.Printf("Instantaneous Demand Published to WattVision: %f Watts", e.Watts)
+	}
 }
 
 func pushCurrentSummationDelivered(c *goraven.CurrentSummationDelivered, e wattvision.EnergyData) {
-	watthours, err := c.GetSummationDelivered()
+	kilowatthours, err := c.GetSummationDelivered()
 	if err != nil {
 		log.Printf("Current Summation Data Failure: %s\n", err)
 		return
 	}
-	e.WattHours = watthours
+	e.WattHours = kilowatthours * 1000 // goraven publishes summation in kWh
 	pushEnergyData(e)
+
+	if verbose {
+		log.Printf("Current Summation Published to WattVision: %f WattHours", e.WattHours)
+	}
 }
 
 func pushEnergyData(e wattvision.EnergyData) {
