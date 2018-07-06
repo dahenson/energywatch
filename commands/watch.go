@@ -3,7 +3,7 @@ package commands
 import (
 	"log"
 
-	"github.com/dahenson/energywatch/wattvision"
+	"github.com/dahenson/energywatch/energyapis"
 	"github.com/dahenson/goraven"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -29,7 +29,7 @@ func watch() {
 
 	defer raven.Close()
 
-	e := wattvision.EnergyData{}
+	e := energyapis.WattVision{}
 	e.SensorId = viper.GetString("sensor_id")
 	e.ApiId = viper.GetString("api_id")
 	e.ApiKey = viper.GetString("api_key")
@@ -52,37 +52,30 @@ func watch() {
 	}
 }
 
-func pushInstantaneousDemand(c *goraven.InstantaneousDemand, e wattvision.EnergyData) {
+func pushInstantaneousDemand(c *goraven.InstantaneousDemand, e energyapis.EnergyAPI) {
 	kilowatts, err := c.GetDemand()
 	if err != nil {
 		log.Printf("Instantaneous Demand Data Failure: %s\n", err)
 		return
 	}
-	e.Watts = kilowatts * 1000 // goraven publishes demand in kW
-	pushEnergyData(e)
+	if err := e.PushInstantaneousDemand(kilowatts * 1000); err != nil {
+		log.Printf("Data Push Failed: %s\n", err)
+	}
 
 	if verbose {
-		log.Printf("Instantaneous Demand Published to WattVision: %f Watts", e.Watts)
+		log.Printf("Instantaneous Demand Published to WattVision: %f Watts", kilowatts*1000)
 	}
 }
 
-func pushCurrentSummationDelivered(c *goraven.CurrentSummationDelivered, e wattvision.EnergyData) {
+func pushCurrentSummationDelivered(c *goraven.CurrentSummationDelivered, e energyapis.EnergyAPI) {
 	kilowatthours, err := c.GetSummationDelivered()
 	if err != nil {
 		log.Printf("Current Summation Data Failure: %s\n", err)
 		return
 	}
-	e.WattHours = kilowatthours * 1000 // goraven publishes summation in kWh
-	pushEnergyData(e)
+	e.PushCurrentSummationDelivered(kilowatthours * 1000)
 
 	if verbose {
-		log.Printf("Current Summation Published to WattVision: %f WattHours", e.WattHours)
-	}
-}
-
-func pushEnergyData(e wattvision.EnergyData) {
-	err := wattvision.PushEnergyData(e)
-	if err != nil {
-		log.Printf("Unable to push data: %s\n", err)
+		log.Printf("Current Summation Published to WattVision: %f WattHours", kilowatthours*1000)
 	}
 }
