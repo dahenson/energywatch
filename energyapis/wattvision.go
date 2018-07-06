@@ -16,10 +16,20 @@ type WattVision struct {
 	watthours float64 `json:"watthours,omitempty"`
 }
 
-const URL = `http://www.wattvision.com/api/v0.2/elec`
+const (
+	WATTVISION_URL  = `http://www.wattvision.com/api/v0.2/elec`
+	WATTVISION_NAME = "WattVision"
+)
 
 /*
- * PushWatts pushes only instantaneous consumption to wattvision
+ * GetName returns the name of the API and satisfies the EnergyAPI interface
+ */
+func (w WattVision) GetName() string {
+	return WATTVISION_NAME
+}
+
+/*
+ * PushInstantaneousDemand pushes only instantaneous consumption to wattvision
  */
 func (w WattVision) PushInstantaneousDemand(watts float64) error {
 	w.watthours = 0.0
@@ -28,7 +38,7 @@ func (w WattVision) PushInstantaneousDemand(watts float64) error {
 }
 
 /*
- * PushWattHours pushes only total consumption to WattVision
+ * PushCurrentSummationDelivered pushes only total consumption to WattVision
  */
 func (w WattVision) PushCurrentSummationDelivered(watthours float64) error {
 	w.watts = 0.0
@@ -44,7 +54,7 @@ func (w WattVision) pushEnergyData() error {
 
 	client := &http.Client{}
 
-	resp, err := client.Post(URL, "text/json", bytes.NewReader(buf))
+	resp, err := client.Post(WATTVISION_URL, "text/json", bytes.NewReader(buf))
 	if err != nil {
 		return err
 	}
